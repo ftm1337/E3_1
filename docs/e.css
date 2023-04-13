@@ -8,6 +8,7 @@
 	font-family:regular;
 	scroll-behavior: smooth !important;
 	color: white;
+	transition: 0.5s ease-in;
 }
 body {
 	margin:0;
@@ -110,6 +111,13 @@ button.submit {
 	margin-top: 50px;
 	padding: 6px;
 	font-size: 0.75em;
+}
+button.submit:hover{
+	box-shadow: 0px 2px 2px #0ff
+}
+button.submit:active{
+	position: relative;
+	top:2px;
 }
 
 button.btn-max {
@@ -607,6 +615,7 @@ polygon.arrow-top {
 
 img.bigthumb {
 	width: 60px;
+	height: 60px;
 	display: inline;
 	vertical-align: middle;
 }
@@ -633,5 +642,6 @@ img.bigthumb {
 
 	.mechanism .input-amount img.bigthumb {
 		width: 100px;
+		height: 100px;
 	}
 }

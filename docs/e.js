@@ -159,15 +159,11 @@ async function cw2()
 		{
 			if(rn.length>0){
 				$("cw").innerHTML="hi, <span style='/*font-family:bold;font-size:1.337em*/'>"+rn[0]+"</span> 👋";
-				cw.onclick=notice(`
-					<h3>GM, ${rn[0]}</h3>${DAPPNAME} is connected to your wallet<br><a href='${EXPLORE}/address/${window.ethereum.selectedAddress}' target='_blank'>${window.ethereum.selectedAddress}</a>
-				`);
+				cw.onclick="notice(`<h3>GM, ${rn[0]}</h3>${DAPPNAME} is connected to your wallet<br><a href='${EXPLORE}/address/${window.ethereum.selectedAddress}' target='_blank'>${window.ethereum.selectedAddress}</a>`)"
 			}
 			else{
 				$("cw").innerHTML= (window.ethereum.selectedAddress).substr(0,10) +"..."+(window.ethereum.selectedAddress).substr(34);
-				cw.onclick=notice(`
-					${DAPPNAME} is connected to your wallet<br><a href='${EXPLORE}/address/${window.ethereum.selectedAddress}' target='_blank'>${window.ethereum.selectedAddress}</a>
-				`);
+				cw.onclick="notice(`${DAPPNAME} is connected to your wallet<br><a href='${EXPLORE}/address/${window.ethereum.selectedAddress}' target='_blank'>${window.ethereum.selectedAddress}</a>`)"
 			}
 		})
 	}
@@ -209,9 +205,12 @@ function arf(){
 			if(!isFinite($('amount-sold-input').value) ) { return }
 			//if($('ain').value == "" ) { $('ain').value=INITIAL }
 			if(o != $('amount-sold-input').value){priceFinder()}
-			if(t != STATE.ts.addres){priceFinder()}
+			if(t != STATE.ts.address){priceFinder()}
 			if(c%10==0){priceFinder()}
-			if(c%20==0){gubs()}
+			if(c%20==0){
+				try { if( ethers.utils.isAddress(window.ethereum.selectedAddress) ) {gubs();} }
+				catch(e) { console.log('No web3 wallet found!'); }
+			}
 			o = $('amount-sold-input').value;
 			t = STATE.ts.address;
 			c++
@@ -221,27 +220,14 @@ function arf(){
 }
 
 async function gubs() {
-	return;
-	lp = new ethers.Contract(WRAP, LPABI, signer);
-	fa = new ethers.Contract(FARM, FARABI, signer);
-	fa_o = new ethers.Contract(FARMOLD, FARABI, signer);
+	gubs_ts = new ethers.Contract(STATE.ts.address, ["function balanceOf(address) public view returns(uint)"], signer);
+	gubs_tb = new ethers.Contract(STATE.tb.address, ["function balanceOf(address) public view returns(uint)"], signer);
 	bal = await Promise.all([
-		lp.balanceOf(window.ethereum.selectedAddress),
-		fa.balanceOf(window.ethereum.selectedAddress),
-		fa.earned(window.ethereum.selectedAddress,TEARNED[0]),
-		fa.earnings(window.ethereum.selectedAddress,TEARNED[0]),
-		fa.tvl(),
-		fa.aprs(),
-		fa_o.balanceOf(window.ethereum.selectedAddress)
+		gubs_ts.balanceOf(window.ethereum.selectedAddress),
+		gubs_tb.balanceOf(window.ethereum.selectedAddress),
 	]);
-	$("bal_lp").innerHTML = (bal[0]/1e18).toFixed(8);
-	$("bal_fa").innerHTML = (bal[1]/1e18).toFixed(8);
-	$("bal_r0").innerHTML = (bal[2]/1e18).toFixed(8);
-	$("bal_tr0").innerHTML = (bal[3]/1e18).toFixed(8);
-	$("bal_tvl").innerHTML = fornum(bal[4],18);
-	$("bal_apr").innerHTML = fornum(bal[5][0],18);
-
-	if(Number(bal[6]) > 0) { promptRedeposit(); }
+	$("amount-sold-balance").innerHTML = "Balance: "+ (bal[0]/10**STATE.ts.decimals).toFixed(STATE.ts.decimals) +" "+ STATE.ts.symbol;
+	$("amount-bought-balance").innerHTML = "Balance: "+ (bal[1]/10**STATE.tb.decimals).toFixed(STATE.tb.decimals) +" "+ STATE.tb.symbol
 }
 
 async function pre_stats() {
@@ -284,7 +270,9 @@ async function priceFinder() {
 	let ain = (Number($("amount-sold-input").value) * 10**selldeci).toFixed(0);
 	let sod = await R.getSwapOut(POOLADDR, ain, dir);
 	//$("amount-sold-input").value = ((Number(ain)-Number(sod[0]))/10**selldeci).toFixed(selldeci);
-	$("amount-bought-input").value = (Number(sod[1])/10**buydeci).toFixed(buydeci);
+	let aout = (Number(sod[1])/10**buydeci).toFixed(buydeci);
+	$("amount-bought-input").value = aout;
+	console.log([ain, Number(sod[1]), Date.now()])
 	//set slippage
 }
 
@@ -296,6 +284,38 @@ async function sell() {
 	let selldeci = ( dir ? T_X.decimals : T_Y.decimals);
 	let buydeci = ( dir ? T_Y.decimals : T_X.decimals);
 	let ain = (Number($("amount-sold-input").value) * 10**selldeci).toFixed(0);
+	let TCS = new ethers.Contract(_nam,["function balanceOf(address) public view returns(uint)","function allowance(address,address) public view returns(uint)","function approve(address,uint)"],signer);
+	let ubs = await Promise.all([
+		TCS.balanceOf(windows.ethereum.selectedAddress),
+		TCS.allowance(windows.ethereum.selectedAddress, R.address)
+	]);
+	if(Number(ubs[0]) < Number(ain)) {
+		notice(`
+		<h2><img height="20px" src="${STATE.ts.logo}"> Insufficient Balance</h2>
+		You have ${(ubs[0]/10**selldeci).toFixed(selldeci)} ${(dir?T_X:T_Y).symbol}.
+		<br><br><i>Desired amount: ${(ain/10**selldeci).toFixed(selldeci)} ${(dir?T_X:T_Y).symbol}
+		`);
+	}
+	if(Number(ubs[1]) < Number(ain)) {
+		notice(`
+			<h2>Approve ${(dir?T_X:T_Y).symbol} <img height="20px" src="${STATE.ts.logo}"> for Trade</h2>
+			E3 Engine needs your approval to trade ${(dir?T_X:T_Y).symbol}.
+			<br>
+			<br><b>Please confirm this tx in your wallet.<b>
+		`);
+		txh = await pc.approve(R.address, ain);
+		notice(`
+			<h2><img height="20px" src="${STATE.ts.logo}"> <img height="20px" src="${STATE.tb.logo}"></h2>
+			<br>
+			<h2>Approving the E3 router...</h2>
+			<b>Awaiting confirmation from the network . . ..<b>
+		`);
+		txr = await txh.wait();
+		notice(`
+			<h2>Approval Granted Successfully</h2>
+			<h2>Starting Trade Execution</h2>
+		`);
+	}
 	notice(`
 		<h2>Finding path...</h2>
 		To sell ${(Number(ain)/10**selldeci).toFixed(selldeci)}
@@ -306,13 +326,39 @@ async function sell() {
 	let bmin = Math.floor(Number(sod[1]) * 99/100);
 	notice(`
 		<h2>Order Summary</h2>
-		Selling ${(Number(ain)/10**selldeci).toFixed(selldeci)} ${(dir?T_X:T_Y).symbol} for ${(Number(sod[1])/10**buydeci).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol}.
+		Selling ${(Number(ain)/10**selldeci).toFixed(selldeci)} ${(dir?T_X:T_Y).symbol} <img height="20px" src="${STATE.ts.logo}">
+		<br>Buying ${(Number(sod[1])/10**buydeci).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol} <img height="20px" src="${STATE.tb.logo}">
 		<br><br><b>Expected Prices</b>
 		<br>1 ${(dir?T_X:T_Y).symbol} = ${(sod[1]/ain).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol}
 		<br>1 ${(dir?T_Y:T_X).symbol} = ${(ain/sod[1]).toFixed(selldeci)} ${(dir?T_X:T_Y).symbol}
-		<br><i>Slippage Tolerance: 1%</i>
+		<br><b>Slippage Tolerance</b> : 1%</i>
+		<br><b>Minimum Received</b> : ${(bmin/10**buydeci).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol}</i>
+		<br>
+		<br><br><b><u>Please confirm this transaction in your wallet</u></b>
 	`);
-	let txr = await R.swapExactTokensForTokens( BigInt(ain), BigInt(bmin), {pairBinSteps:[1], versions:[2], tokenPath: dir?[T_X.address, T_Y.address]:[T_Y.address, T_X.address]}, window.ethereum.selectedAddress, Math.floor(Date.now()/1000+3600) );
+	console.log([ BigInt(ain), BigInt(bmin), {pairBinSteps:[1], versions:[2], tokenPath: dir?[T_X.address, T_Y.address]:[T_Y.address, T_X.address]}, window.ethereum.selectedAddress, Math.floor(Date.now()/1000+3600) ]);
+	let txh = await R.swapExactTokensForTokens( BigInt(ain), BigInt(bmin), {pairBinSteps:[1], versions:[2], tokenPath: dir?[T_X.address, T_Y.address]:[T_Y.address, T_X.address]}, window.ethereum.selectedAddress, Math.floor(Date.now()/1000+3600) );
+	notice(`
+		<h2>Awaiting Confirmation..</h2>
+		Selling ${(Number(ain)/10**selldeci).toFixed(selldeci)} ${(dir?T_X:T_Y).symbol} <img height="20px" src="${STATE.ts.logo}">
+		<br>Buying ${(Number(sod[1])/10**buydeci).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol} <img height="20px" src="${STATE.tb.logo}">
+		<br><h3>Expected Prices</h3>
+		<br>1 ${(dir?T_X:T_Y).symbol} = ${(sod[1]/ain).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol}
+		<br>1 ${(dir?T_Y:T_X).symbol} = ${(ain/sod[1]).toFixed(selldeci)} ${(dir?T_X:T_Y).symbol}
+		<br><h3>Slippage</h3>
+		<b>Tolerance</b> : 1%</i>
+		<b>Minimum Received</b> : ${(bmin/10**buydeci).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol}</i>
+		<br>
+		<br><br><b><u>Please wait till this transaction is confirmed by the ${CHAIN_NAME} Network.</u></b>
+		<h4><a target="_blank" href="https://ftmscan.com/tx/${txr.hash}">View on Explorer</a></h4>
+	`);
+	await txr.wait();
+	notice(`
+		<h2>Trade Executed</h2>
+		Sold ${(Number(ain)/10**selldeci).toFixed(selldeci)} ${(dir?T_X:T_Y).symbol} for ${(dir?T_Y:T_X).symbol}.
+		<br>
+		<h4><a target="_blank" href="https://ftmscan.com/tx/${txr.hash}">View on Explorer</a></h4>
+	`);
 }
 
 
