@@ -25,13 +25,13 @@
 				<br>
 				<div class="input-amount-els">
 					<div>
-						<img class="bigthumb" src="https://ftm.guru/icons/usdc.svg"/>
+						<img class="bigthumb" id="logo-sold" src="https://ftm.guru/icons/usdc.svg"/>
 					</div>
 					<div class="amount-area">
 						<div class="prefill-num">
 							<span id="amount-sold-balance">0.000000 USDC</span> available
 						</div>
-						<div class="amount-sold" id="token-sold" value="USDC">
+						<div class="amount-sold" id="token-sold" value="0x04068DA6C83AFCFA0e13ba15A6696662335D5B75">
 							<input value="1.0" placeholder="Sell Amount" id="amount-sold-input">
 						</div>
 					</div>
@@ -47,13 +47,13 @@
   				</div>
 				<div class="input-amount-els">
 					<div>
-						<img class="bigthumb" src="https://ftm.guru/icons/usdt.svg"/>
+						<img class="bigthumb" id="logo-bought" src="https://ftm.guru/icons/usdt.svg"/>
 					</div>
 					<div class="amount-area">
 						<div class="prefill-num">
 							<span id="amount-sold-balance">0.000000 fUSDT</span> available
 						</div>
-						<div class="amount-bought" id="token-bought" value="fUSDT">
+						<div class="amount-bought" id="token-bought" value="0x049d68029688eAbF473097a2fC38ef61633A3C7A">
 							<input value="0.0" placeholder="Buy Amount" id="amount-bought-input" disabled="">
 						</div>
 					</div>
@@ -161,12 +161,16 @@
 				POOLID = 0;
 				POOLADDR = "0x1d766E912b4872ECa5172a5792c82ec28B9f894C";
 				T_X = {
+					symbol: USDC,
 					address: USDC,
-					decimals: 6
+					decimals: 6,
+					logo: "https://ftm.guru/icons/usdc.svg"
 				}
 				T_Y = {
+					symbol: "fUSDT",
 					address: FUSDT,
-					decimals: 6
+					decimals: 6,
+					logo: "https://ftm.guru/icons/usdt.svg"
 				}
 			</script>
 	</body>

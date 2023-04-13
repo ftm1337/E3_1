@@ -177,6 +177,7 @@ function arf(){
 		console.log("refreshing farm stats", new Date() );
 		try { if( ethers.utils.isAddress(window.ethereum.selectedAddress) ) {gubs();} }
 		catch(e) { console.log('hmm..'); }
+		priceFinder()
 	}, 15000);
 }
 
@@ -246,10 +247,10 @@ async function priceFinder() {
 			let _nam = $("token-sold").value;
 			if($("token-sold").value != assetsold || _nam != amt || priceFinderCounter%5==0) {
 				let R = new ethers.Contract(ROUTER.address, ROUTER.ABI, new ethers.providers.JsonRpcProvider(RPC_URL));
-				let dir = TOKEN_X.address == _nam ? true : false;
-				let selldeci = ( dir ? TOKEN_X.decimals : TOKEN_Y.decimals);
-				let buydeci = ( dir ? TOKEN_Y.decimals : TOKEN_X.decimals);
-				let ain = (Number($("amount-sold-input")) * 10**selldeci).toFixed(0);
+				let dir = T_X.address == _nam ? true : false;
+				let selldeci = ( dir ? T_X.decimals : T_Y.decimals);
+				let buydeci = ( dir ? T_Y.decimals : T_X.decimals);
+				let ain = (Number($("amount-sold-input").value) * 10**selldeci).toFixed(0);
 				let sod = await R.getSwapOut(POOLADDR, ain, dir);
 				$("amount-sold-input").value = ((Number(ain)-Number(sod[0]))/10**selldeci).toFixed(selldeci);
 				$("amount-bought-input").value = (Number(sod[1])/10**buydeci).toFixed(buydeci);
@@ -262,3 +263,43 @@ async function priceFinder() {
 }
 
 
+async function sell() {
+	let R = new ethers.Contract(ROUTER.address, ROUTER.ABI, signer);
+	let dir = T_X.address == _nam ? true : false;
+	let selldeci = ( dir ? T_X.decimals : T_Y.decimals);
+	let buydeci = ( dir ? T_Y.decimals : T_X.decimals);
+	let ain = (Number($("amount-sold-input").value) * 10**selldeci).toFixed(0);
+	notice(`
+		<h2>Finding path...</h2>
+		To sell ${(Number(ain)/10**selldeci).toFixed(selldeci)}
+		 ${(dir?T_X:T_Y).symbol} for ${(dir?T_Y:T_X).symbol}
+		<br><i>Slippage Tolerance: 1%</i>
+	`);
+	let sod = await R.getSwapOut(POOLADDR, ain, dir);
+	let bmin = Math.floor(Number(sod[1]) * 99/100);
+	notice(`
+		<h2>Order Summary</h2>
+		Selling ${(Number(ain)/10**selldeci).toFixed(selldeci)} ${(dir?T_X:T_Y).symbol} for ${(Number(sod[1])/10**buydeci).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol}.
+		<br><br><b>Expected Prices</b>
+		<br>1 ${(dir?T_X:T_Y).symbol} = ${(sod[1]/ain).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol}
+		<br>1 ${(dir?T_Y:T_X).symbol} = ${(ain/sod[1]).toFixed(selldeci)} ${(dir?T_X:T_Y).symbol}
+		<br><i>Slippage Tolerance: 1%</i>
+	`);
+	let txr = await R.swap( BigInt(ain), BigInt(bmin), {pairBinSteps:[1], versions:[2], tokenPath: dir?[T_X.address, T_Y.address]:[T_Y.address, T_X.address]}, window.ethereum.selectedAddress, Math.floor(Date.now()/1000+3600) );
+}
+
+async function flipAssets() {
+	let assetsold = $("token-sold").value;
+	if (assetsold == T_X.value) {
+		$("token-sold").value = T_Y.address;
+		$("token-bought").value = T_X.address;
+		$("logo-sold").src = T_Y.logo;
+		$("logo-bought").src = T_X.logo;
+	}
+	else {
+		$("token-sold").value = T_X.address;
+		$("token-bought").value = T_Y.address;
+		$("logo-sold").src = T_X.logo;
+		$("logo-bought").src = T_Y.logo;
+	}
+}
