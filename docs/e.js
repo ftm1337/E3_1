@@ -286,26 +286,26 @@ async function sell() {
 	let ain = (Number($("amount-sold-input").value) * 10**selldeci).toFixed(0);
 	let TCS = new ethers.Contract(_nam,["function balanceOf(address) public view returns(uint)","function allowance(address,address) public view returns(uint)","function approve(address,uint)"],signer);
 	let ubs = await Promise.all([
-		TCS.balanceOf(windows.ethereum.selectedAddress),
-		TCS.allowance(windows.ethereum.selectedAddress, R.address)
+		TCS.balanceOf(window.ethereum.selectedAddress),
+		TCS.allowance(window.ethereum.selectedAddress, R.address)
 	]);
 	if(Number(ubs[0]) < Number(ain)) {
 		notice(`
-		<h2><img height="20px" src="${STATE.ts.logo}"> Insufficient Balance</h2>
+		<h2><img style="vertical-align: bottom;" height="20px" src="${STATE.ts.logo}"> Insufficient Balance</h2>
 		You have ${(ubs[0]/10**selldeci).toFixed(selldeci)} ${(dir?T_X:T_Y).symbol}.
 		<br><br><i>Desired amount: ${(ain/10**selldeci).toFixed(selldeci)} ${(dir?T_X:T_Y).symbol}
 		`);
 	}
 	if(Number(ubs[1]) < Number(ain)) {
 		notice(`
-			<h2>Approve ${(dir?T_X:T_Y).symbol} <img height="20px" src="${STATE.ts.logo}"> for Trade</h2>
+			<h2>Approve ${(dir?T_X:T_Y).symbol} <img style="vertical-align: bottom;" height="20px" src="${STATE.ts.logo}"> for Trade</h2>
 			E3 Engine needs your approval to trade ${(dir?T_X:T_Y).symbol}.
 			<br>
 			<br><b>Please confirm this tx in your wallet.<b>
 		`);
 		txh = await pc.approve(R.address, ain);
 		notice(`
-			<h2><img height="20px" src="${STATE.ts.logo}"> <img height="20px" src="${STATE.tb.logo}"></h2>
+			<h2><img style="vertical-align: bottom;" height="20px" src="${STATE.ts.logo}"> <img style="vertical-align: bottom;" height="20px" src="${STATE.tb.logo}"></h2>
 			<br>
 			<h2>Approving the E3 router...</h2>
 			<b>Awaiting confirmation from the network . . ..<b>
@@ -326,13 +326,14 @@ async function sell() {
 	let bmin = Math.floor(Number(sod[1]) * 99/100);
 	notice(`
 		<h2>Order Summary</h2>
-		Selling ${(Number(ain)/10**selldeci).toFixed(selldeci)} ${(dir?T_X:T_Y).symbol} <img height="20px" src="${STATE.ts.logo}">
-		<br>Buying ${(Number(sod[1])/10**buydeci).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol} <img height="20px" src="${STATE.tb.logo}">
-		<br><br><b>Expected Prices</b>
-		<br>1 ${(dir?T_X:T_Y).symbol} = ${(sod[1]/ain).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol}
-		<br>1 ${(dir?T_Y:T_X).symbol} = ${(ain/sod[1]).toFixed(selldeci)} ${(dir?T_X:T_Y).symbol}
-		<br><b>Slippage Tolerance</b> : 1%</i>
-		<br><b>Minimum Received</b> : ${(bmin/10**buydeci).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol}</i>
+		Selling ${(Number(ain)/10**selldeci).toFixed(selldeci)} ${(dir?T_X:T_Y).symbol} <img style="vertical-align: bottom;" height="20px" src="${STATE.ts.logo}">
+		<br>Buying ${(Number(sod[1])/10**buydeci).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol} <img style="vertical-align: bottom;" height="20px" src="${STATE.tb.logo}">
+		<br><h3>Expected Prices</h3>
+		<br><img style="vertical-align: bottom;" height="20px" src="${STATE.tb.logo}"><img style="vertical-align: bottom;" height="20px" src="${STATE.ts.logo}"> ${(sod[1]/ain).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol} per ${(dir?T_X:T_Y).symbol}
+		<br><img style="vertical-align: bottom;" height="20px" src="${STATE.ts.logo}"><img style="vertical-align: bottom;" height="20px" src="${STATE.tb.logo}"> ${(ain/sod[1]).toFixed(selldeci)} ${(dir?T_X:T_Y).symbol} per ${(dir?T_Y:T_X).symbol}
+		<br><h3>Slippage</h3>
+		<b>Tolerance</b> : 1%</i>
+		<b>Minimum Received</b> : <img style="vertical-align: bottom;" height="20px" src="${STATE.tb.logo}"> ${(bmin/10**buydeci).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol}</i>
 		<br>
 		<br><br><b><u>Please confirm this transaction in your wallet</u></b>
 	`);
@@ -340,17 +341,17 @@ async function sell() {
 	let txh = await R.swapExactTokensForTokens( BigInt(ain), BigInt(bmin), {pairBinSteps:[1], versions:[2], tokenPath: dir?[T_X.address, T_Y.address]:[T_Y.address, T_X.address]}, window.ethereum.selectedAddress, Math.floor(Date.now()/1000+3600) );
 	notice(`
 		<h2>Awaiting Confirmation..</h2>
-		Selling ${(Number(ain)/10**selldeci).toFixed(selldeci)} ${(dir?T_X:T_Y).symbol} <img height="20px" src="${STATE.ts.logo}">
-		<br>Buying ${(Number(sod[1])/10**buydeci).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol} <img height="20px" src="${STATE.tb.logo}">
+		Selling ${(Number(ain)/10**selldeci).toFixed(selldeci)} ${(dir?T_X:T_Y).symbol} <img style="vertical-align: bottom;" height="20px" src="${STATE.ts.logo}">
+		<br>Buying ${(Number(sod[1])/10**buydeci).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol} <img style="vertical-align: bottom;" height="20px" src="${STATE.tb.logo}">
 		<br><h3>Expected Prices</h3>
-		<br>1 ${(dir?T_X:T_Y).symbol} = ${(sod[1]/ain).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol}
-		<br>1 ${(dir?T_Y:T_X).symbol} = ${(ain/sod[1]).toFixed(selldeci)} ${(dir?T_X:T_Y).symbol}
+		<br><img style="vertical-align: bottom;" height="20px" src="${STATE.tb.logo}"><img style="vertical-align: bottom;" height="20px" src="${STATE.ts.logo}"> ${(sod[1]/ain).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol} per ${(dir?T_X:T_Y).symbol}
+		<br><img style="vertical-align: bottom;" height="20px" src="${STATE.ts.logo}"><img style="vertical-align: bottom;" height="20px" src="${STATE.tb.logo}"> ${(ain/sod[1]).toFixed(selldeci)} ${(dir?T_X:T_Y).symbol} per ${(dir?T_Y:T_X).symbol}
 		<br><h3>Slippage</h3>
 		<b>Tolerance</b> : 1%</i>
-		<b>Minimum Received</b> : ${(bmin/10**buydeci).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol}</i>
+		<b>Minimum Received</b> : <img style="vertical-align: bottom;" height="20px" src="${STATE.tb.logo}"> ${(bmin/10**buydeci).toFixed(buydeci)} ${(dir?T_Y:T_X).symbol}</i>
 		<br>
 		<br><br><b><u>Please wait till this transaction is confirmed by the ${CHAIN_NAME} Network.</u></b>
-		<h4><a target="_blank" href="https://ftmscan.com/tx/${txr.hash}">View on Explorer</a></h4>
+		<h4><a target="_blank" href="https://ftmscan.com/tx/${txh.hash}">View on Explorer</a></h4>
 	`);
 	await txr.wait();
 	notice(`
