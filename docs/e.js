@@ -365,19 +365,25 @@ async function sell() {
 
 
 async function flipAssets() {
-	console.log("Flip0: ",STATE.ts.symbol,STATE.tb.symbol,T_X.symbol,T_Y.symbol)
+	console.log("Flip0: ",STATE.ts.symbol,STATE.tb.symbol,T_X.symbol,T_Y.symbol);
 	if (STATE.ts.address == T_X.address) {
 		STATE.ts = T_Y;
 		STATE.tb = T_X;
 		$("logo-sold").src = T_Y.logo;
 		$("logo-bought").src = T_X.logo;
+		tmp = $("amount-sold-balance").innerHTML;
+		$("amount-sold-balance").innerHTML = $("amount-bought-balance").innerHTML;
+		$("amount-bought-balance").innerHTML tmp;
 	}
 	else if(STATE.ts.address == T_Y.address) {
-		console.log("Flip1: ",STATE.ts.symbol,STATE.tb.symbol,T_X.symbol,T_Y.symbol)
+		console.log("Flip1: ",STATE.ts.symbol,STATE.tb.symbol,T_X.symbol,T_Y.symbol);
 		STATE.ts = T_X;
 		STATE.tb = T_Y;
 		$("logo-sold").src = T_X.logo;
 		$("logo-bought").src = T_Y.logo;
+		tmp = $("amount-sold-balance").innerHTML;
+		$("amount-sold-balance").innerHTML = $("amount-bought-balance").innerHTML;
+		$("amount-bought-balance").innerHTML tmp;
 	}
 	else {
 		console.log("Corrupt State");
